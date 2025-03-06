@@ -4,21 +4,10 @@ import os
 from io import BytesIO
 from toml import load
 
-# Check for required packages
-try:
-    import openpyxl
-    excel_support = True
-except ImportError:
-    excel_support = False
-
 st.set_page_config(page_title="Data Sweeper", layout="wide")
 
 st.title("Advanced Data Sweeper")  
 st.write("Transform your files between CSV and Excel formats with built-in data cleaning and visualization.")
-
-# Show warning if Excel support is missing
-if not excel_support:
-    st.warning("Excel support is limited because 'openpyxl' package is not installed. Excel files can be read but not written.")
 
 uploaded_files = st.file_uploader("Upload your files (CSV or Excel):", type=["csv", "xlsx"], accept_multiple_files=True)
 
@@ -62,25 +51,14 @@ if uploaded_files:
             st.bar_chart(df.select_dtypes(include='number').iloc[:, :5])
         
         st.subheader("🔄 Conversion Options")
-        conversion_options = ["CSV"]
-        if excel_support:
-            conversion_options.append("Excel")
-        conversion_type = st.radio(f"Convert {file.name} to:", conversion_options, key=file.name)
+        # Only offer CSV as conversion option
+        conversion_type = "CSV"
         
         if st.button(f"Convert {file.name}"):
             buffer = BytesIO()
-            if conversion_type == "CSV":
-                df.to_csv(buffer, index=False)
-                file_name = file.name.replace(file_extension, ".csv")
-                mime_type = "text/csv"
-            elif conversion_type == "Excel" and excel_support:
-                try:
-                    df.to_excel(buffer, index=False, engine='openpyxl')
-                    file_name = file.name.replace(file_extension, ".xlsx")
-                    mime_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                except Exception as e:
-                    st.error(f"Error creating Excel file: {str(e)}")
-                    continue
+            df.to_csv(buffer, index=False)
+            file_name = file.name.replace(file_extension, ".csv")
+            mime_type = "text/csv"
             buffer.seek(0)
             
             st.download_button(
